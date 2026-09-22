@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MANAGER
+  RESIDENT
+}
+
+enum ChargeStatus {
+  PENDING
+  UNDER_REVIEW
+  PAID
+  PARTIAL
+  OVERDUE
+  REJECTED
+}
+
+enum ReceiptMatchStatus {
+  MATCH
+  SHORTFALL
+  OVERPAY
+  UNREADABLE
+  WRONG_DESTINATION
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum VoteStatus {
+  ACTIVE
+  CLOSED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  unit      String?
+  role      Role     @default(RESIDENT)
+  avatarHue     Int      @default(180)
+  walletBalance Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  announcements Announcement[]
+  charges       Charge[]
+  tickets       Ticket[]       @relation("TicketAuthor")
+  ticketReplies TicketReply[]
+  votes         VoteBallot[]
+  cleaningTasks CleaningTask[] @relation("CleaningAssignee")
+  notifications Notification[]
+  walletTxs     WalletTransaction[]
+  chatMessages  ChatMessage[]
+}
+
+model BuildingSettings {
+  id                String   @id @default("default")
+  bankName          String?
+  accountHolder     String?
+  bankCardNumber    String?
+  bankAccountNumber String?
+  shebaNumber       String?
+  paymentNote       String?
+  updatedAt         DateTime @updatedAt
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  important Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model BuildingRule {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  category  String   @default("عمومی")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Poll {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  status      VoteStatus   @default(ACTIVE)
+  endsAt      DateTime?
+  createdAt   DateTime     @default(now())
+  options     PollOption[]
+  ballots     VoteBallot[]
+}
+
+model PollOption {
+  id     String       @id @default(cuid())
+  pollId String
+  poll   Poll         @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label  String
+  votes  VoteBallot[]
+}
+
+model VoteBallot {
+  id        String     @id @default(cuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  createdAt DateTime   @default(now())
+
+  @@unique([pollId, userId])
+}
+
+model Charge {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id])
+  month         String
+  amount        Int
+  status        ChargeStatus     @default(PENDING)
+  paidAmount    Int              @default(0)
+  paidAt        DateTime?
+  note          String?
+  breakdownJson String?
+  createdAt     DateTime         @default(now())
+  receipts      PaymentReceipt[]
+}
+
+model PaymentReceipt {
+  id              String             @id @default(cuid())
+  chargeId        String
+  charge          Charge             @relation(fields: [chargeId], references: [id], onDelete: Cascade)
+  imagePath       String
+  ocrText         String?
+  ocrAmount       Int?
+  matchStatus     ReceiptMatchStatus @default(UNREADABLE)
+  shortfall       Int                @default(0)
+  surplus         Int                @default(0)
+  destinationOk   Boolean?
+  destinationInfo String?
+  reviewed        Boolean            @default(false)
+  managerNote     String?
+  createdAt       DateTime           @default(now())
+}
+
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  type      String
+  note      String?
+  chargeId  String?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Int
+  category    String
+  month       String
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model CleaningTask {
+  id         String   @id @default(cuid())
+  title      String
+  area       String
+  dayOfWeek  String
+  completed  Boolean  @default(false)
+  assigneeId String?
+  assignee   User?    @relation("CleaningAssignee", fields: [assigneeId], references: [id])
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model Ticket {
+  id        String        @id @default(cuid())
+  title     String
+  body      String
+  status    TicketStatus  @default(OPEN)
+  authorId  String
+  author    User          @relation("TicketAuthor", fields: [authorId], references: [id])
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  replies   TicketReply[]
+}
+
+model TicketReply {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id             String    @id @default(cuid())
+  body           String    @default("")
+  authorId       String
+  author         User      @relation(fields: [authorId], references: [id])
+  attachmentUrl  String?
+  attachmentName String?
+  attachmentType String?
+  editedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+
+  @@index([createdAt])
+  @@index([updatedAt])
+}

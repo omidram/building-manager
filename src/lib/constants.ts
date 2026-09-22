@@ -1,0 +1,30 @@
+export const NAV_ITEMS = [
+  { href: "/dashboard", label: "داشبورد", icon: "LayoutDashboard" },
+  { href: "/announcements", label: "اعلانات", icon: "Megaphone" },
+  { href: "/chat", label: "گفتگوی همگانی", icon: "MessagesSquare" },
+  { href: "/tickets", label: "تیکت پشتیبانی", icon: "Ticket" },
+  { href: "/members", label: "اعضا", icon: "Users" },
+  { href: "/rules", label: "قوانین", icon: "BookOpen" },
+  { href: "/voting", label: "رأی‌گیری", icon: "Vote" },
+  { href: "/charges", label: "شارژ ماهانه", icon: "Wallet" },
+  { href: "/expenses", label: "هزینه‌ها", icon: "Receipt" },
+  { href: "/cleaning", label: "نظافت", icon: "Sparkles" },
+] as const;
+
+export const ILLUSTRATIONS = {
+  hero: "/illustrations/tehran-skyline.jpg",
+  poster: "/illustrations/tehran-poster.jpg",
+  windows: "/illustrations/windows-grid.jpg",
+  alley: "/illustrations/alley-sunset.jpg",
+  balconies: "/illustrations/balconies-night.jpg",
+  neighbors: "/illustrations/window-neighbors.jpg",
+  sharing: "/illustrations/neighbors-sharing.jpg",
+  special: "/illustrations/special-windows.jpg",
+  apartments: "/illustrations/apartment-grid.jpg",
+  hand: "/illustrations/community-hand.jpg",
+  meeting: "/illustrations/meeting-table.jpg",
+  phone: "/illustrations/phone-cord.jpg",
+  steps: "/illustrations/helping-steps.jpg",
+  neighborhood: "/illustrations/neighborhood-meeting.jpg",
+  care: "/illustrations/community-care.jpg",
+} as const;
